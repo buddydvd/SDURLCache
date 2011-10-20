@@ -334,6 +334,15 @@ static NSDateFormatter* CreateDateFormatter(NSString *format)
         // Apply LRU cache eviction algorithm while disk usage outreach capacity
         NSDictionary *sizes = [self.diskCacheInfo objectForKey:kSDURLCacheInfoSizesKey];
 
+        // HACK: For some reason, the diskCacheUsage becomes incorrect afer a
+        // balanceDiskUsage call. To workaround with this issue, we recalculate
+        // the actual diskCacheUsage for every call to balanceDiskUsage.
+        NSUInteger actualDiskCacheUsage = 0;
+        for (NSString *key in sizes)
+            actualDiskCacheUsage += [[sizes objectForKey:key] unsignedIntValue];
+        if (diskCacheUsage != actualDiskCacheUsage)
+            diskCacheUsage = actualDiskCacheUsage;
+
         NSInteger capacityToSave = diskCacheUsage - self.diskCapacity;
         NSArray *sortedKeys = [[self.diskCacheInfo objectForKey:kSDURLCacheInfoAccessesKey] keysSortedByValueUsingSelector:@selector(compare:)];
         NSEnumerator *enumerator = [sortedKeys objectEnumerator];
