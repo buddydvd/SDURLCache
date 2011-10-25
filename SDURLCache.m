@@ -7,7 +7,16 @@
 //
 
 #import "SDURLCache.h"
+#import <UIKit/UIKit.h>
 #import <CommonCrypto/CommonDigest.h>
+
+#define __IPHONE_2_0 20000
+#define __IPHONE_2_1 20100
+#define __IPHONE_2_2 20200
+#define __IPHONE_3_0 30000
+#define __IPHONE_3_1 30100
+#define __IPHONE_3_2 30200
+#define __IPHONE_4_0 40000
 
 static NSTimeInterval const kSDURLCacheInfoDefaultMinCacheInterval = 5 * 60; // 5 minute
 static NSString *const kSDURLCacheInfoFileName = @"cacheInfo.plist";
@@ -53,6 +62,7 @@ static NSDateFormatter* CreateDateFormatter(NSString *format)
 @property (nonatomic, retain) NSOperationQueue *ioQueue;
 @property (retain) NSOperation *periodicMaintenanceOperation;
 - (void)periodicMaintenance;
+- (NSInteger)getSystemVersionAsAnInteger;
 @end
 
 @implementation SDURLCache
@@ -230,6 +240,24 @@ static NSDateFormatter* CreateDateFormatter(NSString *format)
     // If nothing permitted to define the cache expiration delay nor to restrict its cacheability, use a default cache expiration delay
     return [[[NSDate alloc] initWithTimeInterval:kSDURLCacheDefault sinceDate:now] autorelease];
 
+}
+
+- (NSInteger) getSystemVersionAsAnInteger {
+    int i = 0;
+    NSInteger version = 0;
+
+    NSArray* digits = [[UIDevice currentDevice].systemVersion componentsSeparatedByString:@"."];
+    NSEnumerator* enumer = [digits objectEnumerator];
+    NSString* number;
+    while ((number = [enumer nextObject])) {
+        if (i > 2) {
+            break;
+        }
+        NSInteger multipler = powf(100, 2 - i);
+        version += [number intValue] * multipler;
+        i++;
+    }
+    return version;
 }
 
 #pragma mark SDURLCache (private)
@@ -520,9 +548,9 @@ static NSDateFormatter* CreateDateFormatter(NSString *format)
                 [super storeCachedResponse:diskResponse forRequest:request];
 
                 // SRK: Work around an interesting retainCount bug in CFNetwork on iOS << 3.2.
-                if (kCFCoreFoundationVersionNumber < kCFCoreFoundationVersionNumber_iPhoneOS_3_2)
-                {
-                    diskResponse = [super cachedResponseForRequest:request];
+                if ([self getSystemVersionAsAnInteger] < __IPHONE_3_2) {
+                    [diskResponse retain];
+                    //diskResponse = [super cachedResponseForRequest:request];
                 }
 
                 if (diskResponse)
