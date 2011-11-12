@@ -264,6 +264,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = SDURLCache;
 				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
@@ -279,6 +280,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = SDURLCache;
 				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
